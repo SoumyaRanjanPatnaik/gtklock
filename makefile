@@ -10,21 +10,20 @@ MICRO_VERSION := 0
 
 PREFIX = /usr/local
 SYSCONFDIR = /etc
-ifeq ($(shell uname), FreeBSD)
-	SYSCONFDIR = $(PREFIX)/etc
-endif
 INSTALL = install
 
-LIBS := pam wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-export-2.0
-ifeq ($(shell uname), FreeBSD)
-	LIBS := $(shell echo $(LIBS) | cut -d' ' -f 2-)
+LIBS := wayland-client gtk+-wayland-3.0 gtk-layer-shell-0 gmodule-export-2.0
+
+ifeq '$(shell uname)' 'FreeBSD'
+	SYSCONFDIR = $(PREFIX)/etc
+	LDLIBS += -lpam
+else
+	LIBS += pam
 endif
+
 CFLAGS += -std=c11 -Iinclude -DPREFIX=$(PREFIX) $(shell pkg-config --cflags $(LIBS))
 CFLAGS += -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DMICRO_VERSION=$(MICRO_VERSION)
 LDLIBS += -Wl,--export-dynamic $(shell pkg-config --libs $(LIBS))
-ifeq ($(shell uname), FreeBSD)
-	LDLIBS += -lpam
-endif
 
 OBJ = wlr-input-inhibitor-unstable-v1-client-protocol.o
 OBJ += $(patsubst %.c, %.o, $(wildcard src/*.c))
